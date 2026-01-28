@@ -2,10 +2,12 @@ package http
 
 import (
 	"embed"
+	"io"
 	"io/fs"
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/devuser/MemoryLogMonitor/logstore"
@@ -131,22 +133,49 @@ func (s *Server) serveFrontend() {
 	// Try to serve embedded frontend
 	distFS, err := fs.Sub(frontendFS, "frontend/dist")
 	if err == nil {
+		// Use NoRoute for all non-API routes
 		s.router.NoRoute(func(c *gin.Context) {
-			// Try to serve static files
 			path := c.Request.URL.Path
+			
+			// Default to index.html for root
 			if path == "/" {
 				path = "/index.html"
 			}
 			
-			file, err := distFS.Open(path[1:]) // Remove leading slash
-			if err == nil {
-				file.Close()
-				c.FileFromFS(path[1:], http.FS(distFS))
+			// Remove leading slash
+			cleanPath := strings.TrimPrefix(path, "/")
+			
+			// Try to open the file
+			file, err := distFS.Open(cleanPath)
+			if err != nil {
+				// File not found, serve index.html for SPA routing
+				file, err = distFS.Open("index.html")
+				if err != nil {
+					c.String(http.StatusNotFound, "404 not found")
+					return
+				}
+				cleanPath = "index.html"
+			}
+			defer file.Close()
+			
+			// Read file content
+			content, err := io.ReadAll(file)
+			if err != nil {
+				c.String(http.StatusInternalServerError, "Error reading file")
 				return
 			}
 			
-			// Fallback to index.html for SPA routing
-			c.FileFromFS("index.html", http.FS(distFS))
+			// Determine content type
+			contentType := "text/html; charset=utf-8"
+			if strings.HasSuffix(cleanPath, ".js") {
+				contentType = "application/javascript; charset=utf-8"
+			} else if strings.HasSuffix(cleanPath, ".css") {
+				contentType = "text/css; charset=utf-8"
+			} else if strings.HasSuffix(cleanPath, ".svg") {
+				contentType = "image/svg+xml"
+			}
+			
+			c.Data(http.StatusOK, contentType, content)
 		})
 	} else {
 		// Fallback: serve a simple HTML page if frontend not built
