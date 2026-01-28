@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+        <Property name="LOG_HOST">${env:LOG_HOST:-localhost}</Property>
+        <Property name="LOG_PORT">${env:LOG_PORT:-9090}</Property>
+    </Properties>
+    
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+        
+        <!-- TCP Socket Appender - MemoryLogMonitor -->
+        <Socket name="MemoryLogMonitor" 
+                host="${LOG_HOST}" 
+                port="${LOG_PORT}" 
+                protocol="TCP">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <IgnoreExceptions>true</IgnoreExceptions>
+            <ReconnectDelayMillis>30000</ReconnectDelayMillis>
+            <ImmediateFlush>true</ImmediateFlush>
+            <ConnectTimeoutMillis>1000</ConnectTimeoutMillis>
+        </Socket>
+    </Appenders>
+    
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="MemoryLogMonitor"/>
+        </Root>
+    </Loggers>
+</Configuration>

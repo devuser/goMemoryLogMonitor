@@ -1,0 +1,31 @@
+{
+  "name": "nemo-monitor-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx,.vue",
+    "lint:fix": "eslint src --ext .ts,.tsx,.vue --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,vue,js,jsx,css,scss,html,json,md}\"",
+    "format:css": "prettier --write \"src/**/*.{css,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,vue,js,jsx,css,scss,html,json,md}\""
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.0",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.30.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.5.0",
+    "vite": "^4.5.0",
+    "vue-tsc": "^1.8.27"
+  }
+}
+
