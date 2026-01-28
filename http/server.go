@@ -26,16 +26,22 @@ type Server struct {
 
 // NewServer creates a new HTTP server
 func NewServer(port int, store *logstore.LogStore) *Server {
-	return &Server{
-		port:  port,
-		store: store,
+	s := &Server{
+		port:   port,
+		store:  store,
+		router: gin.Default(),
 	}
+	s.setupRoutes()
+	return s
+}
+
+// GetRouter returns the Gin router
+func (s *Server) GetRouter() *gin.Engine {
+	return s.router
 }
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	s.router = gin.Default()
-	s.setupRoutes()
 	return s.router.Run(":" + strconv.Itoa(s.port))
 }
 

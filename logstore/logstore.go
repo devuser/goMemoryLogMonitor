@@ -2,6 +2,7 @@ package logstore
 
 import (
 	"container/list"
+	"strings"
 	"sync"
 	"time"
 )
@@ -14,18 +15,16 @@ type LogEntry struct {
 
 // LogStore manages log entries with LRU eviction
 type LogStore struct {
-	mu       sync.RWMutex
-	entries  *list.List
-	maxSize  int
-	entryMap map[*list.Element]struct{}
+	mu      sync.RWMutex
+	entries *list.List
+	maxSize int
 }
 
 // NewLogStore creates a new LogStore with the specified maximum size
 func NewLogStore(maxSize int) *LogStore {
 	return &LogStore{
-		entries:  list.New(),
-		maxSize:  maxSize,
-		entryMap: make(map[*list.Element]struct{}),
+		entries: list.New(),
+		maxSize: maxSize,
 	}
 }
 
@@ -35,15 +34,13 @@ func (ls *LogStore) Add(entry LogEntry) {
 	defer ls.mu.Unlock()
 
 	// Add new entry to front
-	elem := ls.entries.PushFront(entry)
-	ls.entryMap[elem] = struct{}{}
+	ls.entries.PushFront(entry)
 
 	// Evict oldest if over capacity
 	if ls.entries.Len() > ls.maxSize {
 		oldest := ls.entries.Back()
 		if oldest != nil {
 			ls.entries.Remove(oldest)
-			delete(ls.entryMap, oldest)
 		}
 	}
 }
@@ -78,10 +75,8 @@ func (ls *LogStore) GetFiltered(keyword string, startTime, endTime *time.Time) [
 		}
 		
 		// Filter by keyword
-		if keyword != "" {
-			if !contains(entry.Message, keyword) {
-				continue
-			}
+		if keyword != "" && !strings.Contains(entry.Message, keyword) {
+			continue
 		}
 		
 		result = append(result, entry)
@@ -94,18 +89,4 @@ func (ls *LogStore) Count() int {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
 	return ls.entries.Len()
-}
-
-// contains is a simple case-sensitive substring check
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (substr == "" || findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
